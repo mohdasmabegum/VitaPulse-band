@@ -3,11 +3,20 @@
     "public": "frontend",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
-      { "source": "/auth/**",        "function": "api" },
-      { "source": "/recommend**",    "function": "api" },
-      { "source": "/history**",      "function": "api" },
-      { "source": "/symptom-check**","function": "api" },
-      { "source": "/upload-report**","function": "api" }
+      { "source": "/auth/**",             "function": "api" },
+      { "source": "/recommend**",         "function": "api" },
+      { "source": "/history**",           "function": "api" },
+      { "source": "/symptom-check**",     "function": "api" },
+      { "source": "/upload-report**",     "function": "api" },
+      { "source": "/ml-insights**",       "function": "api" },
+      { "source": "/health-alerts**",     "function": "api" },
+      { "source": "/content/**",          "function": "api" },
+      { "source": "/forum/**",            "function": "api" },
+      { "source": "/gamification**",      "function": "api" },
+      { "source": "/profile**",           "function": "api" },
+      { "source": "/providers/**",        "function": "api" },
+      { "source": "/edge/**",             "function": "api" },
+      { "source": "/report/**",           "function": "api" }
     ]
   },
   "functions": {

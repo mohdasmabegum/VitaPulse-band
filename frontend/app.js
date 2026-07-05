@@ -130,10 +130,15 @@ document.addEventListener("click", e => {
 ══════════════════════════════════════ */
 const navBtns   = document.querySelectorAll(".nav-btn");
 const tabPanels = {
-  symptoms:  document.getElementById("tab-symptoms"),
-  recommend: document.getElementById("tab-recommend"),
-  history:   document.getElementById("tab-history"),
-  account:   document.getElementById("tab-account"),
+  symptoms:     document.getElementById("tab-symptoms"),
+  recommend:    document.getElementById("tab-recommend"),
+  history:      document.getElementById("tab-history"),
+  content:      document.getElementById("tab-content"),
+  forum:        document.getElementById("tab-forum"),
+  gamification: document.getElementById("tab-gamification"),
+  goals:        document.getElementById("tab-goals"),
+  providers:    document.getElementById("tab-providers"),
+  account:      document.getElementById("tab-account"),
 };
 
 navBtns.forEach(btn => btn.addEventListener("click", () => {
@@ -142,6 +147,10 @@ navBtns.forEach(btn => btn.addEventListener("click", () => {
   const target = btn.dataset.tab;
   Object.entries(tabPanels).forEach(([k, el]) => el.classList.toggle("hidden", k !== target));
   if (target === "history") loadHistory();
+  if (target === "content") loadContentCategories();
+  if (target === "forum") loadForumPosts();
+  if (target === "gamification") loadGamification();
+  if (target === "goals") loadGoals();
   if (window.innerWidth <= 768) sidebar.classList.remove("open");
 }));
 
@@ -283,3 +292,231 @@ async function loadHistory() {
       : '<p class="muted">No saved recommendations yet.</p>';
   } catch { container.innerHTML = '<p class="muted">Could not load history.</p>'; }
 }
+
+/* ══════════════════════════════════════
+   CONTENT HUB
+══════════════════════════════════════ */
+async function loadContentCategories() {
+  const res = await fetch(API + "/content/categories");
+  const cats = await res.json();
+  const row = document.getElementById("content-categories");
+  row.innerHTML = cats.map(c =>
+    `<span class="chip" style="cursor:pointer" onclick="loadArticles('${c}')">${c.replace(/_/g," ")}</span>`
+  ).join("") + `<span class="chip" style="cursor:pointer" onclick="loadArticles()">All</span>`;
+  loadArticles();
+}
+
+async function loadArticles(category) {
+  const url = category ? `${API}/content/articles?category=${category}` : `${API}/content/articles`;
+  const res = await fetch(url);
+  const articles = await res.json();
+  const vRes = await fetch(category ? `${API}/content/videos?category=${category}` : `${API}/content/videos`);
+  const videos = await vRes.json();
+  const container = document.getElementById("content-results");
+  container.innerHTML = [
+    ...articles.map(a => `<article class="result-card">
+      <h3>📄 ${a.title}</h3>
+      <p class="muted">${a.category.replace(/_/g," ")} · ${a.read_time_min} min read</p>
+      <p>${a.summary}</p>
+      ${a.video_url ? `<a href="${a.video_url}" target="_blank" class="btn-primary" style="display:inline-block;margin-top:0.5rem;font-size:0.85rem">▶ Watch Video</a>` : ""}
+      <button class="btn-primary" style="margin-top:0.5rem;font-size:0.85rem" onclick="loadArticleDetail('${a.id}')">Read More</button>
+    </article>`),
+    ...videos.map(v => `<article class="result-card">
+      <h3>🎬 ${v.title}</h3>
+      <p class="muted">${v.category.replace(/_/g," ")} · ${v.duration_min} min</p>
+      <p>${v.description}</p>
+      <a href="${v.url}" target="_blank" class="btn-primary" style="display:inline-block;margin-top:0.5rem;font-size:0.85rem">▶ Watch</a>
+    </article>`),
+  ].join("") || `<p class="muted">No content found.</p>`;
+}
+
+async function loadArticleDetail(id) {
+  const res = await fetch(`${API}/content/articles/${id}`);
+  const a = await res.json();
+  document.getElementById("content-results").innerHTML = `<article class="result-card" style="grid-column:1/-1">
+    <button onclick="loadArticles()" style="margin-bottom:0.75rem" class="btn-primary">← Back</button>
+    <h3>${a.title}</h3>
+    <p class="muted">${a.category} · ${a.read_time_min} min read</p>
+    <pre style="white-space:pre-wrap;font-family:inherit;line-height:1.7">${a.content}</pre>
+    ${a.references.length ? `<p class="muted" style="margin-top:0.75rem"><strong>References:</strong> ${a.references.join(", ")}</p>` : ""}
+    ${a.video_url ? `<a href="${a.video_url}" target="_blank" class="btn-primary" style="display:inline-block;margin-top:0.75rem">▶ Watch Video</a>` : ""}
+  </article>`;
+}
+
+document.getElementById("content-search-btn").addEventListener("click", async () => {
+  const q = document.getElementById("content-search").value.trim();
+  if (q.length < 2) return;
+  const res = await fetch(`${API}/content/search?q=${encodeURIComponent(q)}`);
+  const data = await res.json();
+  const container = document.getElementById("content-results");
+  container.innerHTML = [
+    ...data.articles.map(a => `<article class="result-card"><h3>📄 ${a.title}</h3><p>${a.summary}</p>
+      <button class="btn-primary" style="font-size:0.85rem" onclick="loadArticleDetail('${a.id}')">Read More</button></article>`),
+    ...data.videos.map(v => `<article class="result-card"><h3>🎬 ${v.title}</h3><p>${v.description}</p>
+      <a href="${v.url}" target="_blank" class="btn-primary" style="display:inline-block;font-size:0.85rem">▶ Watch</a></article>`),
+  ].join("") || `<p class="muted">No results for "${q}".</p>`;
+});
+
+/* ══════════════════════════════════════
+   FORUM
+══════════════════════════════════════ */
+async function loadForumPosts(category) {
+  const url = category ? `${API}/forum/posts?category=${category}` : `${API}/forum/posts`;
+  const res = await fetch(url, { headers: authToken ? { Authorization: `Bearer ${authToken}` } : {} });
+  const posts = await res.json();
+  document.getElementById("forum-posts").innerHTML = posts.length
+    ? posts.map(p => `<article class="result-card">
+        <strong>${p.title}</strong> <span class="badge normal">${p.category}</span>
+        <p class="muted" style="margin:0.25rem 0">by ${p.username} · ${p.created_at?.slice(0,16)} · ${p.reply_count} replies</p>
+        <p>${p.body}</p>
+        <button class="btn-primary" style="font-size:0.85rem;margin-top:0.5rem" onclick="loadReplies(${p.id}, this)">💬 View Replies</button>
+        <div id="replies-${p.id}" style="margin-top:0.5rem"></div>
+      </article>`).join("")
+    : `<p class="muted">No posts yet. Be the first!</p>`;
+}
+
+window.loadReplies = async (postId, btn) => {
+  const container = document.getElementById(`replies-${postId}`);
+  if (container.innerHTML) { container.innerHTML = ""; return; }
+  const res = await fetch(`${API}/forum/posts/${postId}/replies`);
+  const replies = await res.json();
+  container.innerHTML = (replies.length
+    ? replies.map(r => `<div style="padding:0.4rem 0;border-top:1px solid #eee"><strong>${r.username}</strong>: ${r.body}</div>`).join("")
+    : `<p class="muted">No replies yet.</p>`)
+    + (authToken ? `<div style="margin-top:0.5rem;display:flex;gap:0.5rem">
+        <input id="reply-input-${postId}" type="text" placeholder="Write a reply…" style="flex:1" />
+        <button class="btn-primary" onclick="submitReply(${postId})">Reply</button>
+      </div>` : "");
+};
+
+window.submitReply = async (postId) => {
+  const input = document.getElementById(`reply-input-${postId}`);
+  const body = input.value.trim();
+  if (body.length < 2) return;
+  await fetch(`${API}/forum/posts/${postId}/replies`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+    body: JSON.stringify({ body }),
+  });
+  input.value = "";
+  loadReplies(postId, null);
+};
+
+document.getElementById("forum-post-btn").addEventListener("click", async () => {
+  if (!authToken) { document.getElementById("forum-msg").textContent = "Login to post."; return; }
+  const title = document.getElementById("forum-title").value.trim();
+  const body = document.getElementById("forum-body").value.trim();
+  const category = document.getElementById("forum-category").value;
+  if (title.length < 5 || body.length < 10) {
+    document.getElementById("forum-msg").textContent = "Title ≥5 chars, body ≥10 chars."; return;
+  }
+  await fetch(`${API}/forum/posts`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+    body: JSON.stringify({ title, body, category }),
+  });
+  document.getElementById("forum-title").value = "";
+  document.getElementById("forum-body").value = "";
+  document.getElementById("forum-msg").textContent = "✓ Posted!";
+  loadForumPosts();
+});
+
+/* ══════════════════════════════════════
+   GAMIFICATION
+══════════════════════════════════════ */
+async function loadGamification() {
+  const container = document.getElementById("gamification-content");
+  if (!authToken) { container.innerHTML = `<p class="muted">Login to view your badges.</p>`; return; }
+  const res = await fetch(API + "/gamification", { headers: { Authorization: `Bearer ${authToken}` } });
+  const g = await res.json();
+  container.innerHTML = `
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem">
+      <div style="text-align:center"><div style="font-size:2rem">🔥</div><strong>${g.streak_days}</strong><br/><span class="muted">Day Streak</span></div>
+      <div style="text-align:center"><div style="font-size:2rem">📋</div><strong>${g.total_recommendations}</strong><br/><span class="muted">Total Logs</span></div>
+    </div>
+    <h4>Earned Badges</h4>
+    <div class="chip-row" style="margin:0.5rem 0">
+      ${g.badges.length ? g.badges.map(b => `<span class="chip" title="${b.description}">${b.icon} ${b.name}</span>`).join("") : `<span class="muted">No badges yet — start logging!</span>`}
+    </div>
+    ${g.next_badge ? `<p class="muted" style="margin-top:0.5rem">Next: ${g.next_badge.icon} <strong>${g.next_badge.name}</strong> — ${g.next_badge.description}</p>` : ""}
+  `;
+}
+
+/* ══════════════════════════════════════
+   HEALTH GOALS & PDF EXPORT
+══════════════════════════════════════ */
+async function loadGoals() {
+  if (!authToken) return;
+  const res = await fetch(API + "/profile", { headers: { Authorization: `Bearer ${authToken}` } });
+  const profile = await res.json();
+  const g = profile.health_goals;
+  const f = document.getElementById("goals-form");
+  if (g.goal_weight_kg)        f.goal_weight_kg.value = g.goal_weight_kg;
+  if (g.goal_steps_per_day)    f.goal_steps_per_day.value = g.goal_steps_per_day;
+  if (g.goal_sleep_hours)      f.goal_sleep_hours.value = g.goal_sleep_hours;
+  if (g.goal_body_fat_percent) f.goal_body_fat_percent.value = g.goal_body_fat_percent;
+  if (g.focus_areas?.length)   f.focus_areas.value = g.focus_areas.join(", ");
+}
+
+document.getElementById("goals-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!authToken) { document.getElementById("goals-msg").textContent = "Login to save goals."; return; }
+  const d = new FormData(e.target);
+  const payload = {};
+  if (d.get("goal_weight_kg"))        payload.goal_weight_kg = Number(d.get("goal_weight_kg"));
+  if (d.get("goal_steps_per_day"))    payload.goal_steps_per_day = Number(d.get("goal_steps_per_day"));
+  if (d.get("goal_sleep_hours"))      payload.goal_sleep_hours = Number(d.get("goal_sleep_hours"));
+  if (d.get("goal_body_fat_percent")) payload.goal_body_fat_percent = Number(d.get("goal_body_fat_percent"));
+  const fa = d.get("focus_areas") || "";
+  payload.focus_areas = fa.split(",").map(s => s.trim()).filter(Boolean);
+  await fetch(API + "/profile/goals", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
+    body: JSON.stringify(payload),
+  });
+  document.getElementById("goals-msg").textContent = "✓ Goals saved!";
+});
+
+document.getElementById("pdf-export-btn").addEventListener("click", async () => {
+  if (!authToken) { alert("Login to export your PDF report."); return; }
+  const res = await fetch(API + "/report/pdf?limit=10", { headers: { Authorization: `Bearer ${authToken}` } });
+  if (!res.ok) { alert("Could not generate PDF."); return; }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "vitapulse_report.pdf"; a.click();
+  URL.revokeObjectURL(url);
+});
+
+/* ══════════════════════════════════════
+   PROVIDER LOCATOR
+══════════════════════════════════════ */
+document.getElementById("prov-locate-btn").addEventListener("click", () => {
+  if (!navigator.geolocation) { alert("Geolocation not supported."); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    document.getElementById("prov-lat").value = pos.coords.latitude.toFixed(4);
+    document.getElementById("prov-lon").value = pos.coords.longitude.toFixed(4);
+  }, () => alert("Could not get location. Enter manually."));
+});
+
+document.getElementById("prov-search-btn").addEventListener("click", async () => {
+  const lat = parseFloat(document.getElementById("prov-lat").value);
+  const lon = parseFloat(document.getElementById("prov-lon").value);
+  const radius = parseFloat(document.getElementById("prov-radius").value) || 50;
+  const type = document.getElementById("prov-type").value;
+  if (isNaN(lat) || isNaN(lon)) { alert("Enter valid coordinates or use 'Use My Location'."); return; }
+  const res = await fetch(API + "/providers/search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ latitude: lat, longitude: lon, radius_km: radius, type }),
+  });
+  const providers = await res.json();
+  document.getElementById("providers-results").innerHTML = providers.length
+    ? providers.map(p => `<article class="result-card">
+        <strong>${p.name}</strong> ${p.low_cost ? `<span class="badge normal">Low Cost</span>` : ""}
+        <p class="muted">${p.address} · ${p.distance_km} km away</p>
+        ${p.phone ? `<p>📞 ${p.phone}</p>` : ""}
+        <a href="${p.maps_url}" target="_blank" class="btn-primary" style="display:inline-block;margin-top:0.5rem;font-size:0.85rem">📍 Open in Maps</a>
+      </article>`).join("")
+    : `<p class="muted">No ${type}s found within ${radius} km. Try increasing the radius.</p>`;
+});

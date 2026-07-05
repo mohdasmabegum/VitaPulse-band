@@ -5,6 +5,9 @@ __pycache__/
 .vscode/
 diet_system.db
 
+# Firebase Cloud Functions dependencies
+functions/node_modules/
+
 # Flutter build outputs
 diet_app/build/
 diet_app/.dart_tool/

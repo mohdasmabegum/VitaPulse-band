@@ -61,6 +61,7 @@ class ApiService {
       ..headers['Accept'] = 'application/json';
     if (_token != null) req.headers['Authorization'] = 'Bearer $_token';
 
+    if (file.bytes == null) throw Exception('Could not read file bytes');
     req.files.add(http.MultipartFile.fromBytes(
       'file',
       file.bytes!,

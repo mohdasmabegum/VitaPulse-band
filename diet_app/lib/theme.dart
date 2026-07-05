@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 
-// VitaPulse brand colors — derived from logo new.png (vibrant health green + warm gold)
-const kPrimary   = Color(0xFF1B5E20); // deep forest green
-const kPrimaryMid= Color(0xFF2E7D32); // medium green
-const kAccent    = Color(0xFFFFB300); // amber gold
-const kAccent2   = Color(0xFF43A047); // bright green
-const kBg        = Color(0xFFF1F8F1); // very light green tint
-const kCard      = Colors.white;
-const kTextDark  = Color(0xFF1B2A1B);
-const kTextGrey  = Color(0xFF6B7280);
-const kSuccess   = Color(0xFF22C55E);
-const kError     = Color(0xFFEF4444);
-const kWarning   = Color(0xFFF59E0B);
+const kPrimary    = Color(0xFF0A1628);
+const kPrimaryMid = Color(0xFF1A3A5C);
+const kAccent     = Color(0xFFC8A96E);
+const kAccent2    = Color(0xFF1A3A5C);
+const kBg         = Color(0xFFF4F6FA);
+const kCard       = Colors.white;
+const kTextDark   = Color(0xFF0A1628);
+const kTextGrey   = Color(0xFF6B7280);
+const kSuccess    = Color(0xFF22C55E);
+const kError      = Color(0xFFEF4444);
+const kWarning    = Color(0xFFF59E0B);
 
 ThemeData appTheme() => ThemeData(
   useMaterial3: true,
@@ -31,7 +30,7 @@ ThemeData appTheme() => ThemeData(
   ),
   navigationBarTheme: NavigationBarThemeData(
     backgroundColor: kCard,
-    indicatorColor: kAccent2.withOpacity(0.18),
+    indicatorColor: kAccent.withOpacity(0.2),
     labelTextStyle: WidgetStateProperty.all(
       const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: kPrimary),
     ),
@@ -46,10 +45,10 @@ ThemeData appTheme() => ThemeData(
   ),
   inputDecorationTheme: InputDecorationTheme(
     filled: true,
-    fillColor: const Color(0xFFF6FBF6),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCDE8CD))),
-    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCDE8CD))),
-    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: kAccent2, width: 2)),
+    fillColor: const Color(0xFFF8F9FC),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
+    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: kAccent, width: 2)),
     labelStyle: const TextStyle(color: kTextGrey),
     contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
   ),

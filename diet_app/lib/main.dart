@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
-import 'landing_screen.dart';
+import 'auth_screen.dart';
 import 'home_shell.dart';
 import 'theme.dart';
 
@@ -45,13 +45,14 @@ class _SplashGateState extends State<SplashGate> with SingleTickerProviderStateM
     super.initState();
     _ctrl  = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
     _fade  = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _ctrl, curve: const Interval(0, 0.6, curve: Curves.easeOut)));
-    _scale = Tween<double>(begin: 0.7, end: 1).animate(CurvedAnimation(parent: _ctrl, curve: const Interval(0, 0.6, curve: Curves.elasticOut)));
+    _scale = Tween<double>(begin: 0.7, end: 1).animate(CurvedAnimation(parent: _ctrl, curve: const Interval(0, 0.7, curve: Curves.elasticOut)));
     _ctrl.forward();
     _init();
   }
 
   Future<void> _init() async {
-    await Future.delayed(const Duration(milliseconds: 2000));
+    await Future.delayed(const Duration(milliseconds: 1800));
+    if (!mounted) return;
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     if (!mounted) return;
@@ -60,16 +61,17 @@ class _SplashGateState extends State<SplashGate> with SingleTickerProviderStateM
       ApiService.setUsername(prefs.getString('username') ?? '');
       _go(const HomeShell());
     } else {
-      _go(const LandingScreen());
+      _go(AuthScreen(onLogin: () => _go(const HomeShell())));
     }
   }
 
   void _go(Widget page) {
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, a, __) => page,
         transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child),
-        transitionDuration: const Duration(milliseconds: 600),
+        transitionDuration: const Duration(milliseconds: 500),
       ),
     );
   }
@@ -79,8 +81,6 @@ class _SplashGateState extends State<SplashGate> with SingleTickerProviderStateM
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final logoSize = size.width > 600 ? 140.0 : 110.0;
     return Scaffold(
       backgroundColor: kPrimary,
       body: Center(
@@ -92,17 +92,17 @@ class _SplashGateState extends State<SplashGate> with SingleTickerProviderStateM
               scale: _scale.value,
               child: Column(mainAxisSize: MainAxisSize.min, children: [
                 Container(
-                  width: logoSize, height: logoSize,
+                  width: 110, height: 110,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white.withOpacity(0.1),
-                    border: Border.all(color: kAccent, width: 3),
+                    border: Border.all(color: kAccent, width: 2),
                   ),
                   child: ClipOval(child: Image.asset('assets/logo.png', fit: BoxFit.cover)),
                 ),
-                const SizedBox(height: 22),
-                const Text('VitaPulse', style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 2)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 20),
+                const Text('VitaPulse', style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 2)),
+                const SizedBox(height: 6),
                 Text('Smart Diet Recommendations', style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.6), letterSpacing: 0.5)),
               ]),
             ),

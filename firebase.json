@@ -46,7 +46,7 @@
         }
       },
       {
-        "source": "**",
+        "source": "/dashboard**",
         "run": {
           "serviceId": "diet-api",
           "region": "us-central1"

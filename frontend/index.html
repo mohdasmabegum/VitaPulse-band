@@ -3,123 +3,191 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NutriWatch Intelligence Dashboard</title>
+  <title>VitaPulse — Diet Intelligence</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Serif:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="bg-orb bg-orb-1" aria-hidden="true"></div>
-  <div class="bg-orb bg-orb-2" aria-hidden="true"></div>
 
-  <main class="layout">
+  <!-- ═══════════════════════════════════════════
+       LANDING SCREEN (pre-login)
+  ═══════════════════════════════════════════ -->
+  <div id="landing" class="landing">
+    <div class="landing-orb orb-a"></div>
+    <div class="landing-orb orb-b"></div>
+    <div class="landing-orb orb-c"></div>
 
-    <!-- ── Header ── -->
-    <header class="hero card fade-in">
-      <p class="eyebrow">DIET RECOMMENDATION SYSTEM</p>
-      <h1>NutriWatch Intelligence Dashboard</h1>
-      <p>Enter wearable and biomarker values to receive food guidance for vitamin balance, excess fat reduction, and cholesterol risk control.</p>
+    <div class="landing-inner">
+      <img src="/logo.png" alt="VitaPulse logo" class="landing-logo" />
+      <h1 class="landing-title">VitaPulse</h1>
+      <p class="landing-sub">AI-powered diet intelligence from your biomarkers &amp; wearable data</p>
 
-      <!-- Tab nav -->
-      <nav class="tab-nav" role="tablist">
-        <button class="tab-btn active" data-tab="symptoms"   role="tab" aria-selected="true">🩺 Symptom Checker</button>
-        <button class="tab-btn"        data-tab="recommend"  role="tab">🥗 Recommend</button>
-        <button class="tab-btn"        data-tab="history"    role="tab">📋 History</button>
-        <button class="tab-btn"        data-tab="account"    role="tab">👤 Account</button>
-      </nav>
+      <div class="feature-pills">
+        <span class="pill">🧬 Biomarker Analysis</span>
+        <span class="pill">🩺 Symptom Checker</span>
+        <span class="pill">🥗 Personalised Meals</span>
+        <span class="pill">📋 Health History</span>
+        <span class="pill">💊 Nutrient Gaps</span>
+        <span class="pill">❤️ Heart Health</span>
+      </div>
+
+      <div class="landing-actions">
+        <button class="btn-login" id="go-login">Login</button>
+        <button class="btn-register" id="go-register">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       AUTH MODAL
+  ═══════════════════════════════════════════ -->
+  <div id="auth-modal" class="modal-backdrop hidden">
+    <div class="modal-box" role="dialog" aria-modal="true">
+      <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+      <img src="/logo.png" alt="VitaPulse" class="modal-logo" />
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-mode="login">Login</button>
+        <button class="auth-tab" data-mode="register">Register</button>
+      </div>
+      <form id="auth-form" class="auth-form" autocomplete="off">
+        <label>Username<input type="text" name="username" minlength="3" required placeholder="your_username" /></label>
+        <label>Password<input type="password" name="password" minlength="6" required placeholder="••••••••" /></label>
+        <button type="submit" class="btn-submit" id="auth-submit-btn">Login</button>
+      </form>
+      <p id="auth-msg" class="auth-msg"></p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       APP SHELL (post-login)
+  ═══════════════════════════════════════════ -->
+  <div id="app" class="app hidden">
+
+    <!-- Sidebar nav -->
+    <nav class="sidebar">
+      <div class="sidebar-brand">
+        <img src="/logo.png" alt="VitaPulse" class="sidebar-logo" />
+        <span>VitaPulse</span>
+      </div>
+      <ul class="nav-list">
+        <li><button class="nav-btn active" data-tab="symptoms">🩺<span>Symptoms</span></button></li>
+        <li><button class="nav-btn" data-tab="recommend">🥗<span>Recommend</span></button></li>
+        <li><button class="nav-btn" data-tab="history">📋<span>History</span></button></li>
+        <li><button class="nav-btn" data-tab="account">👤<span>Account</span></button></li>
+      </ul>
+      <button class="sidebar-logout" id="sidebar-logout">⏻ Logout</button>
+    </nav>
+
+    <!-- Mobile top bar -->
+    <header class="topbar">
+      <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
+      <img src="/logo.png" alt="VitaPulse" class="topbar-logo" />
+      <span class="topbar-title">VitaPulse</span>
+      <button class="topbar-logout" id="topbar-logout">⏻</button>
     </header>
 
-    <!-- ── TAB: Symptom Checker ── -->
-    <div id="tab-symptoms" class="tab-panel">
-      <section class="card stagger">
-        <h2>Symptom Checker</h2>
-        <p class="muted">Type a symptom and press <strong>Add</strong>. Answer follow-up questions to refine the assessment.</p>
+    <!-- Content area -->
+    <main class="content">
 
-        <div class="symptom-input-row">
-          <input id="symptom-input" type="text" placeholder="e.g. fatigue, bone pain, tingling" />
-          <button id="symptom-add-btn" class="action-btn">Add &amp; Check</button>
+      <!-- ── Symptoms ── -->
+      <section id="tab-symptoms" class="tab-panel">
+        <div class="page-header">
+          <h2>🩺 Symptom Checker</h2>
+          <p class="muted">Add symptoms and answer follow-ups to detect nutrient deficiencies.</p>
         </div>
-
-        <div id="symptom-chips" class="chip-row"></div>
-        <div id="symptom-error" class="error-msg hidden"></div>
-
-        <div id="symptom-followups" class="followup-list"></div>
-        <div id="symptom-results" class="symptom-results"></div>
-      </section>
-    </div>
-
-    <!-- ── TAB: Recommend ── -->
-    <div id="tab-recommend" class="tab-panel hidden">
-      <section class="card stagger">
-        <h2>Health Inputs</h2>
-        <form id="health-form" class="form-grid">
-          <label>Age <input type="number" name="age" value="29" min="1" max="120" required /></label>
-          <label>Sex
-            <select name="sex">
-              <option value="female" selected>female</option>
-              <option value="male">male</option>
-              <option value="other">other</option>
-            </select>
-          </label>
-          <label>Diet Type
-            <select name="diet_type">
-              <option value="omnivore">omnivore</option>
-              <option value="vegetarian" selected>vegetarian</option>
-            </select>
-          </label>
-          <label>Allergies (comma separated)
-            <input type="text" name="allergies" value="peanut" />
-          </label>
-
-          <label>Vitamin D (ng/mL) <input type="number" step="0.1" name="vitamin_d_ng_ml" value="18" min="0" required /></label>
-          <label>Vitamin B12 (pg/mL) <input type="number" step="0.1" name="vitamin_b12_pg_ml" value="240" min="0" required /></label>
-          <label>Ferritin (ng/mL) <input type="number" step="0.1" name="iron_ferritin_ng_ml" value="25" min="0" required /></label>
-
-          <label>LDL (mg/dL) <input type="number" step="0.1" name="ldl_mg_dl" value="145" min="0" required /></label>
-          <label>HDL (mg/dL) <input type="number" step="0.1" name="hdl_mg_dl" value="38" min="0" required /></label>
-          <label>Triglycerides (mg/dL) <input type="number" step="0.1" name="triglycerides_mg_dl" value="190" min="0" required /></label>
-
-          <label>Height (cm) <input type="number" step="0.1" name="height_cm" value="160" min="1" required /></label>
-          <label>Weight (kg) <input type="number" step="0.1" name="weight_kg" value="72" min="1" required /></label>
-          <label>Body Fat (%) <input type="number" step="0.1" name="body_fat_percent" value="34" min="0" max="70" required /></label>
-
-          <label>Daily Steps <input type="number" name="avg_daily_steps" value="4200" min="0" required /></label>
-          <label>Sleep (hours) <input type="number" step="0.1" name="avg_sleep_hours" value="6.2" min="0" max="24" required /></label>
-          <label>Weekly Workouts <input type="number" name="weekly_workouts" value="1" min="0" required /></label>
-
-          <button type="submit" class="action-btn">Generate / Save Recommendation</button>
-        </form>
-      </section>
-      <section id="results" class="results-grid"></section>
-    </div>
-
-    <!-- ── TAB: History ── -->
-    <div id="tab-history" class="tab-panel hidden">
-      <section class="card stagger">
-        <h2>Saved History</h2>
-        <div id="history" class="history-list"><p class="muted">Login to view saved recommendations.</p></div>
-      </section>
-    </div>
-
-    <!-- ── TAB: Account ── -->
-    <div id="tab-account" class="tab-panel hidden">
-      <section class="card stagger">
-        <h2>Account</h2>
-        <form id="auth-form" class="auth-grid">
-          <label>Username <input type="text" name="username" value="demo_user" minlength="3" required /></label>
-          <label>Password <input type="password" name="password" value="pass1234" minlength="6" required /></label>
-          <div class="auth-actions">
-            <button type="button" id="register-btn" class="secondary-btn">Register</button>
-            <button type="button" id="login-btn" class="action-btn">Login</button>
-            <button type="button" id="logout-btn" class="danger-btn hidden">Logout</button>
+        <div class="card anim-card">
+          <div class="symptom-input-row">
+            <input id="symptom-input" type="text" placeholder="e.g. fatigue, bone pain, tingling" />
+            <button id="symptom-add-btn" class="btn-primary">Add &amp; Check</button>
           </div>
-        </form>
-        <p id="auth-status" class="muted">Not logged in. You can still generate recommendations without saving history.</p>
+          <div id="symptom-chips" class="chip-row"></div>
+          <div id="symptom-error" class="error-msg hidden"></div>
+          <div id="symptom-followups" class="followup-list"></div>
+          <div id="symptom-results" class="symptom-results"></div>
+        </div>
       </section>
-    </div>
 
-  </main>
+      <!-- ── Recommend ── -->
+      <section id="tab-recommend" class="tab-panel hidden">
+        <div class="page-header">
+          <h2>🥗 Get Recommendation</h2>
+          <p class="muted">Enter your biomarkers and lifestyle data for personalised food guidance.</p>
+        </div>
+        <div class="card anim-card">
+          <form id="health-form" class="form-grid">
+            <div class="form-section-label">Personal</div>
+            <label>Age<input type="number" name="age" value="29" min="1" max="120" required /></label>
+            <label>Sex
+              <select name="sex">
+                <option value="female" selected>Female</option>
+                <option value="male">Male</option>
+                <option value="other">Other</option>
+              </select>
+            </label>
+            <label>Diet Type
+              <select name="diet_type">
+                <option value="omnivore">Omnivore</option>
+                <option value="vegetarian" selected>Vegetarian</option>
+              </select>
+            </label>
+            <label class="span2">Allergies (comma separated)<input type="text" name="allergies" value="peanut" /></label>
+
+            <div class="form-section-label">Vitamins &amp; Minerals</div>
+            <label>Vitamin D (ng/mL)<input type="number" step="0.1" name="vitamin_d_ng_ml" value="18" min="0" required /></label>
+            <label>Vitamin B12 (pg/mL)<input type="number" step="0.1" name="vitamin_b12_pg_ml" value="240" min="0" required /></label>
+            <label>Ferritin (ng/mL)<input type="number" step="0.1" name="iron_ferritin_ng_ml" value="25" min="0" required /></label>
+
+            <div class="form-section-label">Lipid Panel</div>
+            <label>LDL (mg/dL)<input type="number" step="0.1" name="ldl_mg_dl" value="145" min="0" required /></label>
+            <label>HDL (mg/dL)<input type="number" step="0.1" name="hdl_mg_dl" value="38" min="0" required /></label>
+            <label>Triglycerides (mg/dL)<input type="number" step="0.1" name="triglycerides_mg_dl" value="190" min="0" required /></label>
+
+            <div class="form-section-label">Body Metrics</div>
+            <label>Height (cm)<input type="number" step="0.1" name="height_cm" value="160" min="1" required /></label>
+            <label>Weight (kg)<input type="number" step="0.1" name="weight_kg" value="72" min="1" required /></label>
+            <label>Body Fat (%)<input type="number" step="0.1" name="body_fat_percent" value="34" min="0" max="70" required /></label>
+
+            <div class="form-section-label">Lifestyle</div>
+            <label>Daily Steps<input type="number" name="avg_daily_steps" value="4200" min="0" required /></label>
+            <label>Sleep (hours)<input type="number" step="0.1" name="avg_sleep_hours" value="6.2" min="0" max="24" required /></label>
+            <label>Weekly Workouts<input type="number" name="weekly_workouts" value="1" min="0" required /></label>
+
+            <div class="form-submit-row">
+              <button type="submit" class="btn-primary btn-large">⚡ Generate Recommendation</button>
+            </div>
+          </form>
+        </div>
+        <section id="results" class="results-grid"></section>
+      </section>
+
+      <!-- ── History ── -->
+      <section id="tab-history" class="tab-panel hidden">
+        <div class="page-header">
+          <h2>📋 Saved History</h2>
+          <p class="muted">Your last 10 saved recommendations.</p>
+        </div>
+        <div class="card anim-card">
+          <div id="history" class="history-list"></div>
+        </div>
+      </section>
+
+      <!-- ── Account ── -->
+      <section id="tab-account" class="tab-panel hidden">
+        <div class="page-header">
+          <h2>👤 Account</h2>
+        </div>
+        <div class="card anim-card account-card">
+          <div class="account-avatar" id="account-avatar">VP</div>
+          <p class="account-name" id="account-name">—</p>
+          <p class="muted" id="account-status">Logged in</p>
+          <button class="btn-danger" id="account-logout">Logout</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
 
   <script src="/app.js" defer></script>
 </body>

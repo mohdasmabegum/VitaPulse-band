@@ -104,3 +104,85 @@ class SavedRecommendation(BaseModel):
     created_at: str
     payload: UserInput
     recommendation: RecommendationResponse
+
+
+# ── ML Insight models ────────────────────────────────────────────────────────
+
+class MLInsightRequest(BaseModel):
+    biomarkers: Biomarkers
+    lifestyle: LifestyleSignals
+    history: List[dict] = Field(default_factory=list, description="List of past biomarker+lifestyle snapshots")
+
+
+class RiskBreakdownItem(BaseModel):
+    marker: str
+    value: float
+    risk_score: float
+    weight: float
+
+
+class RiskAssessment(BaseModel):
+    overall_score: float
+    risk_level: Literal["low", "moderate", "high"]
+    breakdown: List[RiskBreakdownItem]
+
+
+class AnomalyItem(BaseModel):
+    marker: str
+    latest_value: float
+    mean: float
+    z_score: float
+    direction: str
+    message: str
+
+
+class TrendItem(BaseModel):
+    marker: str
+    slope: float
+    pct_change_per_period: float
+    direction: str
+    message: str
+
+
+class PreventativeAction(BaseModel):
+    marker: str
+    actions: List[str]
+
+
+class MLInsightResponse(BaseModel):
+    risk_assessment: RiskAssessment
+    anomalies: List[AnomalyItem]
+    trends: List[TrendItem]
+    preventative_actions: List[PreventativeAction]
+    summary: str
+
+
+# ── Health Alert models ───────────────────────────────────────────────────────
+
+class HealthAlertRequest(BaseModel):
+    biomarkers: Biomarkers
+    lifestyle: LifestyleSignals
+    user_goals: dict[str, float] = Field(default_factory=dict, description="Optional user-defined goal values per marker")
+    history: List[dict] = Field(default_factory=list)
+
+
+class AlertItem(BaseModel):
+    type: str
+    severity: Literal["critical", "warning", "info", "positive"]
+    marker: str
+    label: str
+    message: str
+    action: str
+
+
+class AlertSummary(BaseModel):
+    total: int
+    critical: int
+    warnings: int
+    positive: int
+
+
+class HealthAlertResponse(BaseModel):
+    alerts: List[AlertItem]
+    summary: AlertSummary
+    overall_status: Literal["critical", "warning", "good"]

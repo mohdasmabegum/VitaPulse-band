@@ -9,7 +9,9 @@ from fastapi.staticfiles import StaticFiles
 
 from app.db import create_session, get_history, get_user_id_by_token, init_db, register_user, save_recommendation, verify_user
 from app.engine import build_recommendation
-from app.models import AuthCredentials, AuthResponse, DeficiencyInsight, RecommendationResponse, SavedRecommendation, SymptomAssessmentResponse, SymptomInput, UserInput
+from app.ml_engine import generate_ml_insights
+from app.alert_engine import generate_health_alerts
+from app.models import AuthCredentials, AuthResponse, DeficiencyInsight, HealthAlertRequest, HealthAlertResponse, MLInsightRequest, MLInsightResponse, RecommendationResponse, SavedRecommendation, SymptomAssessmentResponse, SymptomInput, UserInput
 from app.symptom_engine import apply_follow_up_answers, assess_symptoms, build_insights, get_follow_up_questions
 
 APP_KEY = "vp-a8f3c2e1d4b7"
@@ -34,7 +36,8 @@ app.add_middleware(
 async def require_app_key(request: Request, call_next):
     public = ("/", "/dashboard", "/auth/register", "/auth/login",
               "/recommend", "/recommend/save", "/history",
-              "/symptom-check", "/upload-report")
+              "/symptom-check", "/upload-report",
+              "/ml-insights", "/health-alerts")
     if request.url.path in public or request.url.path.startswith("/static"):
         return await call_next(request)
     key = request.headers.get("X-App-Key")
@@ -117,7 +120,23 @@ def symptom_check(payload: SymptomInput) -> SymptomAssessmentResponse:
     )
 
 
-@app.post("/recommend", response_model=RecommendationResponse)
+@app.post("/ml-insights", response_model=MLInsightResponse)
+def ml_insights(payload: MLInsightRequest) -> MLInsightResponse:
+    biomarkers = payload.biomarkers.model_dump()
+    lifestyle  = payload.lifestyle.model_dump()
+    result = generate_ml_insights(biomarkers, lifestyle, payload.history or [])
+    return MLInsightResponse(**result)
+
+
+@app.post("/health-alerts", response_model=HealthAlertResponse)
+def health_alerts(payload: HealthAlertRequest) -> HealthAlertResponse:
+    biomarkers = payload.biomarkers.model_dump()
+    lifestyle  = payload.lifestyle.model_dump()
+    result = generate_health_alerts(biomarkers, lifestyle, payload.user_goals or {}, payload.history or [])
+    return HealthAlertResponse(**result)
+
+
+
 def recommend(payload: UserInput) -> RecommendationResponse:
     return build_recommendation(payload)
 

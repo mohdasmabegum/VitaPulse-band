@@ -24,8 +24,10 @@ app = FastAPI(
 
 @app.middleware("http")
 async def require_app_key(request: Request, call_next):
-    # Allow health check
-    if request.url.path == "/":
+    public = ("/", "/dashboard", "/auth/register", "/auth/login",
+              "/recommend", "/recommend/save", "/history",
+              "/symptom-check", "/upload-report")
+    if request.url.path in public or request.url.path.startswith("/static"):
         return await call_next(request)
     key = request.headers.get("X-App-Key")
     if key != APP_KEY:

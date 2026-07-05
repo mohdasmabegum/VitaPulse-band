@@ -2,82 +2,24 @@
 const functions = require("firebase-functions");
 const express   = require("express");
 const crypto    = require("crypto");
-const fs        = require("fs");
-const initSqlJs = require("sql.js");
+const admin     = require("firebase-admin");
 
-/* ── DB ── */
-const DB_PATH = "/tmp/diet_system.db";
-let db;
-
-async function getDb() {
-  if (db) return db;
-  const SQL = await initSqlJs();
-  db = fs.existsSync(DB_PATH)
-    ? new SQL.Database(fs.readFileSync(DB_PATH))
-    : new SQL.Database();
-  db.run(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password_hash TEXT NOT NULL,
-      salt TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-    CREATE TABLE IF NOT EXISTS sessions (
-      token TEXT PRIMARY KEY,
-      user_id INTEGER NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-    CREATE TABLE IF NOT EXISTS recommendation_history (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      payload_json TEXT NOT NULL,
-      response_json TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-  `);
-  persist();
-  return db;
-}
-
-function persist() {
-  if (!db) return;
-  try { fs.writeFileSync(DB_PATH, Buffer.from(db.export())); } catch (_) {}
-}
-
-function dbGet(sql, params = []) {
-  const stmt = db.prepare(sql);
-  stmt.bind(params);
-  const row = stmt.step() ? stmt.getAsObject() : null;
-  stmt.free();
-  return row;
-}
-
-function dbAll(sql, params = []) {
-  const rows = [], stmt = db.prepare(sql);
-  stmt.bind(params);
-  while (stmt.step()) rows.push(stmt.getAsObject());
-  stmt.free();
-  return rows;
-}
-
-function dbRun(sql, params = []) {
-  db.run(sql, params);
-  persist();
-}
+admin.initializeApp();
+const db = admin.firestore();
 
 /* ── Auth helpers ── */
 function hashPw(pw, salt) {
   return crypto.createHash("sha256").update(`${salt}:${pw}`).digest("hex");
 }
 function randToken(n = 32) { return crypto.randomBytes(n).toString("hex"); }
-function getUserId(req) {
+
+async function getUserId(req) {
   const auth = req.headers.authorization || "";
   if (!auth.startsWith("Bearer ")) return null;
   const token = auth.slice(7).trim();
   if (!token) return null;
-  const row = dbGet("SELECT user_id FROM sessions WHERE token = ?", [token]);
-  return row ? row.user_id : null;
+  const snap = await db.collection("sessions").doc(token).get();
+  return snap.exists ? snap.data().user_id : null;
 }
 
 /* ── Food DB ── */
@@ -226,31 +168,38 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => res.json({ message: "Diet API running." }));
 
 app.post("/auth/register", async (req, res) => {
-  await getDb();
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ detail: "username and password required" });
-  const salt = randToken(16), hash = hashPw(password, salt);
+  const uname = username.trim().toLowerCase();
   try {
-    dbRun("INSERT INTO users (username, password_hash, salt) VALUES (?, ?, ?)", [username.trim().toLowerCase(), hash, salt]);
-    const user = dbGet("SELECT id FROM users WHERE username = ?", [username.trim().toLowerCase()]);
+    const existing = await db.collection("users").doc(uname).get();
+    if (existing.exists) return res.status(409).json({ detail: "Username already exists" });
+    const salt = randToken(16);
+    const hash = hashPw(password, salt);
+    await db.collection("users").doc(uname).set({ username: uname, password_hash: hash, salt, created_at: new Date().toISOString() });
     const token = randToken();
-    dbRun("INSERT INTO sessions (token, user_id) VALUES (?, ?)", [token, user.id]);
-    res.json({ token, username: username.trim().toLowerCase() });
+    await db.collection("sessions").doc(token).set({ user_id: uname, created_at: new Date().toISOString() });
+    res.json({ token, username: uname });
   } catch (e) {
-    if (e.message && e.message.includes("UNIQUE")) return res.status(409).json({ detail: "Username already exists" });
     res.status(500).json({ detail: e.message });
   }
 });
 
 app.post("/auth/login", async (req, res) => {
-  await getDb();
   const { username, password } = req.body || {};
-  const user = dbGet("SELECT id, password_hash, salt FROM users WHERE username = ?", [(username || "").trim().toLowerCase()]);
-  if (!user || hashPw(password, user.salt) !== user.password_hash)
-    return res.status(401).json({ detail: "Invalid username or password" });
-  const token = randToken();
-  dbRun("INSERT INTO sessions (token, user_id) VALUES (?, ?)", [token, user.id]);
-  res.json({ token, username: username.trim().toLowerCase() });
+  const uname = (username || "").trim().toLowerCase();
+  try {
+    const snap = await db.collection("users").doc(uname).get();
+    if (!snap.exists) return res.status(401).json({ detail: "Invalid username or password" });
+    const user = snap.data();
+    if (hashPw(password, user.salt) !== user.password_hash)
+      return res.status(401).json({ detail: "Invalid username or password" });
+    const token = randToken();
+    await db.collection("sessions").doc(token).set({ user_id: uname, created_at: new Date().toISOString() });
+    res.json({ token, username: uname });
+  } catch (e) {
+    res.status(500).json({ detail: e.message });
+  }
 });
 
 app.post("/symptom-check", (req, res) => {
@@ -270,27 +219,34 @@ app.post("/recommend", (req, res) => {
 });
 
 app.post("/recommend/save", async (req, res) => {
-  await getDb();
-  const userId = getUserId(req);
+  const userId = await getUserId(req);
   if (!userId) return res.status(401).json({ detail: "Authorization required" });
   try {
     const rec = buildRec(req.body);
-    dbRun("INSERT INTO recommendation_history (user_id, payload_json, response_json) VALUES (?, ?, ?)",
-      [userId, JSON.stringify(req.body), JSON.stringify(rec)]);
+    await db.collection("recommendation_history").add({
+      user_id: userId,
+      payload_json: JSON.stringify(req.body),
+      response_json: JSON.stringify(rec),
+      created_at: new Date().toISOString(),
+    });
     res.json(rec);
   } catch (e) { res.status(422).json({ detail: e.message }); }
 });
 
 app.get("/history", async (req, res) => {
-  await getDb();
-  const userId = getUserId(req);
+  const userId = await getUserId(req);
   if (!userId) return res.status(401).json({ detail: "Authorization required" });
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
-  const rows = dbAll(
-    "SELECT id, payload_json, response_json, created_at FROM recommendation_history WHERE user_id = ? ORDER BY id DESC LIMIT ?",
-    [userId, limit]
-  );
-  res.json(rows.map(r => ({ id: r.id, created_at: r.created_at, payload: JSON.parse(r.payload_json), recommendation: JSON.parse(r.response_json) })));
+  const snap = await db.collection("recommendation_history")
+    .where("user_id", "==", userId)
+    .orderBy("created_at", "desc")
+    .limit(limit)
+    .get();
+  const rows = snap.docs.map(d => {
+    const data = d.data();
+    return { id: d.id, created_at: data.created_at, payload: JSON.parse(data.payload_json), recommendation: JSON.parse(data.response_json) };
+  });
+  res.json(rows);
 });
 
 exports.api = functions.https.onRequest(app);

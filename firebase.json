@@ -1,57 +1,6 @@
 {
   "hosting": {
     "public": "frontend",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [
-      {
-        "source": "/api/**",
-        "run": {
-          "serviceId": "diet-api",
-          "region": "us-central1"
-        }
-      },
-      {
-        "source": "/auth/**",
-        "run": {
-          "serviceId": "diet-api",
-          "region": "us-central1"
-        }
-      },
-      {
-        "source": "/recommend**",
-        "run": {
-          "serviceId": "diet-api",
-          "region": "us-central1"
-        }
-      },
-      {
-        "source": "/history**",
-        "run": {
-          "serviceId": "diet-api",
-          "region": "us-central1"
-        }
-      },
-      {
-        "source": "/symptom-check**",
-        "run": {
-          "serviceId": "diet-api",
-          "region": "us-central1"
-        }
-      },
-      {
-        "source": "/upload-report**",
-        "run": {
-          "serviceId": "diet-api",
-          "region": "us-central1"
-        }
-      },
-      {
-        "source": "/dashboard**",
-        "run": {
-          "serviceId": "diet-api",
-          "region": "us-central1"
-        }
-      }
-    ]
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"]
   }
 }

@@ -1,4 +1,9 @@
 /* ══════════════════════════════════════
+   CONFIG
+══════════════════════════════════════ */
+const API = "https://diet-api.onrender.com";
+
+/* ══════════════════════════════════════
    STATE
 ══════════════════════════════════════ */
 let authToken       = localStorage.getItem("nutri_token") || "";
@@ -69,7 +74,7 @@ authForm.addEventListener("submit", async e => {
   authSubmitBtn.textContent = "Please wait…";
   authMsg.textContent = "";
   try {
-    const res = await fetch(endpoint, {
+    const res = await fetch(API + endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -166,7 +171,7 @@ async function runSymptomCheck() {
   if (!symptoms.length) { symptomResults.innerHTML = ""; followupList.innerHTML = ""; return; }
   symptomError.classList.add("hidden");
   try {
-    const res = await fetch("/symptom-check", {
+    const res = await fetch(API + "/symptom-check", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ symptoms, follow_up_answers: followUpAnswers }),
@@ -252,7 +257,7 @@ form.addEventListener("submit", async e => {
     const endpoint = authToken ? "/recommend/save" : "/recommend";
     const headers = { "Content-Type": "application/json" };
     if (authToken) headers.Authorization = `Bearer ${authToken}`;
-    const res = await fetch(endpoint, { method: "POST", headers, body: JSON.stringify(payload) });
+    const res = await fetch(API + endpoint, { method: "POST", headers, body: JSON.stringify(payload) });
     if (!res.ok) { const err = await res.json(); throw new Error(err?.detail ? JSON.stringify(err.detail) : "Unknown error"); }
     renderResponse(await res.json());
     loadHistory();
@@ -270,7 +275,7 @@ async function loadHistory() {
   const container = document.getElementById("history");
   if (!authToken) { container.innerHTML = '<p class="muted">Login to view saved recommendations.</p>'; return; }
   try {
-    const res = await fetch("/history?limit=10", { headers: { Authorization: `Bearer ${authToken}` } });
+    const res = await fetch(API + "/history?limit=10", { headers: { Authorization: `Bearer ${authToken}` } });
     if (!res.ok) { doLogout(); return; }
     const items = await res.json();
     container.innerHTML = items.length

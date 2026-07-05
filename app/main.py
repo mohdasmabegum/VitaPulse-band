@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -19,6 +20,13 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://vitapulse-band.web.app", "http://localhost:3000", "http://127.0.0.1:8000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

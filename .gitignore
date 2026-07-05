@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.vscode/
+diet_system.db
+
+# Flutter build outputs
+diet_app/build/
+diet_app/.dart_tool/
+diet_app/android/.gradle/
+diet_app/android/.kotlin/
+diet_app/android/local.properties

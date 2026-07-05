@@ -1,0 +1,24 @@
+{
+  "age": 29,
+  "sex": "female",
+  "diet_type": "vegetarian",
+  "allergies": ["peanut"],
+  "biomarkers": {
+    "vitamin_d_ng_ml": 18,
+    "vitamin_b12_pg_ml": 240,
+    "iron_ferritin_ng_ml": 25,
+    "ldl_mg_dl": 145,
+    "hdl_mg_dl": 38,
+    "triglycerides_mg_dl": 190
+  },
+  "body_metrics": {
+    "height_cm": 160,
+    "weight_kg": 72,
+    "body_fat_percent": 34
+  },
+  "lifestyle": {
+    "avg_daily_steps": 4200,
+    "avg_sleep_hours": 6.2,
+    "weekly_workouts": 1
+  }
+}

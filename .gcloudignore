@@ -1,0 +1,8 @@
+.gcloudignore
+.git
+.gitignore
+diet_app/
+frontend/
+tests/
+diet_system.db
+*.md

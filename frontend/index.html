@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NutriWatch Intelligence Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Serif:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="bg-orb bg-orb-1" aria-hidden="true"></div>
+  <div class="bg-orb bg-orb-2" aria-hidden="true"></div>
+
+  <main class="layout">
+
+    <!-- ── Header ── -->
+    <header class="hero card fade-in">
+      <p class="eyebrow">DIET RECOMMENDATION SYSTEM</p>
+      <h1>NutriWatch Intelligence Dashboard</h1>
+      <p>Enter wearable and biomarker values to receive food guidance for vitamin balance, excess fat reduction, and cholesterol risk control.</p>
+
+      <!-- Tab nav -->
+      <nav class="tab-nav" role="tablist">
+        <button class="tab-btn active" data-tab="symptoms"   role="tab" aria-selected="true">🩺 Symptom Checker</button>
+        <button class="tab-btn"        data-tab="recommend"  role="tab">🥗 Recommend</button>
+        <button class="tab-btn"        data-tab="history"    role="tab">📋 History</button>
+        <button class="tab-btn"        data-tab="account"    role="tab">👤 Account</button>
+      </nav>
+    </header>
+
+    <!-- ── TAB: Symptom Checker ── -->
+    <div id="tab-symptoms" class="tab-panel">
+      <section class="card stagger">
+        <h2>Symptom Checker</h2>
+        <p class="muted">Type a symptom and press <strong>Add</strong>. Answer follow-up questions to refine the assessment.</p>
+
+        <div class="symptom-input-row">
+          <input id="symptom-input" type="text" placeholder="e.g. fatigue, bone pain, tingling" />
+          <button id="symptom-add-btn" class="action-btn">Add &amp; Check</button>
+        </div>
+
+        <div id="symptom-chips" class="chip-row"></div>
+        <div id="symptom-error" class="error-msg hidden"></div>
+
+        <div id="symptom-followups" class="followup-list"></div>
+        <div id="symptom-results" class="symptom-results"></div>
+      </section>
+    </div>
+
+    <!-- ── TAB: Recommend ── -->
+    <div id="tab-recommend" class="tab-panel hidden">
+      <section class="card stagger">
+        <h2>Health Inputs</h2>
+        <form id="health-form" class="form-grid">
+          <label>Age <input type="number" name="age" value="29" min="1" max="120" required /></label>
+          <label>Sex
+            <select name="sex">
+              <option value="female" selected>female</option>
+              <option value="male">male</option>
+              <option value="other">other</option>
+            </select>
+          </label>
+          <label>Diet Type
+            <select name="diet_type">
+              <option value="omnivore">omnivore</option>
+              <option value="vegetarian" selected>vegetarian</option>
+            </select>
+          </label>
+          <label>Allergies (comma separated)
+            <input type="text" name="allergies" value="peanut" />
+          </label>
+
+          <label>Vitamin D (ng/mL) <input type="number" step="0.1" name="vitamin_d_ng_ml" value="18" min="0" required /></label>
+          <label>Vitamin B12 (pg/mL) <input type="number" step="0.1" name="vitamin_b12_pg_ml" value="240" min="0" required /></label>
+          <label>Ferritin (ng/mL) <input type="number" step="0.1" name="iron_ferritin_ng_ml" value="25" min="0" required /></label>
+
+          <label>LDL (mg/dL) <input type="number" step="0.1" name="ldl_mg_dl" value="145" min="0" required /></label>
+          <label>HDL (mg/dL) <input type="number" step="0.1" name="hdl_mg_dl" value="38" min="0" required /></label>
+          <label>Triglycerides (mg/dL) <input type="number" step="0.1" name="triglycerides_mg_dl" value="190" min="0" required /></label>
+
+          <label>Height (cm) <input type="number" step="0.1" name="height_cm" value="160" min="1" required /></label>
+          <label>Weight (kg) <input type="number" step="0.1" name="weight_kg" value="72" min="1" required /></label>
+          <label>Body Fat (%) <input type="number" step="0.1" name="body_fat_percent" value="34" min="0" max="70" required /></label>
+
+          <label>Daily Steps <input type="number" name="avg_daily_steps" value="4200" min="0" required /></label>
+          <label>Sleep (hours) <input type="number" step="0.1" name="avg_sleep_hours" value="6.2" min="0" max="24" required /></label>
+          <label>Weekly Workouts <input type="number" name="weekly_workouts" value="1" min="0" required /></label>
+
+          <button type="submit" class="action-btn">Generate / Save Recommendation</button>
+        </form>
+      </section>
+      <section id="results" class="results-grid"></section>
+    </div>
+
+    <!-- ── TAB: History ── -->
+    <div id="tab-history" class="tab-panel hidden">
+      <section class="card stagger">
+        <h2>Saved History</h2>
+        <div id="history" class="history-list"><p class="muted">Login to view saved recommendations.</p></div>
+      </section>
+    </div>
+
+    <!-- ── TAB: Account ── -->
+    <div id="tab-account" class="tab-panel hidden">
+      <section class="card stagger">
+        <h2>Account</h2>
+        <form id="auth-form" class="auth-grid">
+          <label>Username <input type="text" name="username" value="demo_user" minlength="3" required /></label>
+          <label>Password <input type="password" name="password" value="pass1234" minlength="6" required /></label>
+          <div class="auth-actions">
+            <button type="button" id="register-btn" class="secondary-btn">Register</button>
+            <button type="button" id="login-btn" class="action-btn">Login</button>
+            <button type="button" id="logout-btn" class="danger-btn hidden">Logout</button>
+          </div>
+        </form>
+        <p id="auth-status" class="muted">Not logged in. You can still generate recommendations without saving history.</p>
+      </section>
+    </div>
+
+  </main>
+
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

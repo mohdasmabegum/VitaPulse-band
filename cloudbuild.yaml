@@ -1,0 +1,28 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - build
+      - -t
+      - gcr.io/vitapulse-band/diet-api
+      - .
+
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - push
+      - gcr.io/vitapulse-band/diet-api
+
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - diet-api
+      - --image=gcr.io/vitapulse-band/diet-api
+      - --platform=managed
+      - --region=us-central1
+      - --allow-unauthenticated
+      - --port=8080
+      - --project=vitapulse-band
+
+images:
+  - gcr.io/vitapulse-band/diet-api

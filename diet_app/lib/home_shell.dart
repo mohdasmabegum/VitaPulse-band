@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'symptom_screen.dart';
 import 'recommend_screen.dart';
 import 'history_screen.dart';
+import 'content_screen.dart';
+import 'forum_screen.dart';
 import 'profile_screen.dart';
 import 'theme.dart';
 
@@ -18,6 +20,8 @@ class _HomeShellState extends State<HomeShell> with SingleTickerProviderStateMix
   final _screens = const [
     SymptomScreen(),
     RecommendScreen(),
+    ContentScreen(),
+    ForumScreen(),
     HistoryScreen(),
     ProfileScreen(),
   ];
@@ -48,11 +52,14 @@ class _HomeShellState extends State<HomeShell> with SingleTickerProviderStateMix
         onDestinationSelected: _onTap,
         backgroundColor: kCard,
         indicatorColor: kAccent.withOpacity(0.2),
+        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
         destinations: const [
           NavigationDestination(icon: Icon(Icons.health_and_safety_outlined), selectedIcon: Icon(Icons.health_and_safety, color: kPrimary), label: 'Symptoms'),
-          NavigationDestination(icon: Icon(Icons.restaurant_menu_outlined), selectedIcon: Icon(Icons.restaurant_menu, color: kPrimary), label: 'Recommend'),
-          NavigationDestination(icon: Icon(Icons.history_outlined), selectedIcon: Icon(Icons.history, color: kPrimary), label: 'History'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person, color: kPrimary), label: 'Profile'),
+          NavigationDestination(icon: Icon(Icons.restaurant_menu_outlined),   selectedIcon: Icon(Icons.restaurant_menu, color: kPrimary),   label: 'Recommend'),
+          NavigationDestination(icon: Icon(Icons.menu_book_outlined),         selectedIcon: Icon(Icons.menu_book, color: kPrimary),         label: 'Learn'),
+          NavigationDestination(icon: Icon(Icons.forum_outlined),             selectedIcon: Icon(Icons.forum, color: kPrimary),             label: 'Forum'),
+          NavigationDestination(icon: Icon(Icons.history_outlined),           selectedIcon: Icon(Icons.history, color: kPrimary),           label: 'History'),
+          NavigationDestination(icon: Icon(Icons.person_outline),             selectedIcon: Icon(Icons.person, color: kPrimary),            label: 'Profile'),
         ],
       ),
     );

@@ -157,6 +157,148 @@ class MLInsightResponse(BaseModel):
     summary: str
 
 
+# ── Content Hub models ───────────────────────────────────────────────────────
+
+class ArticleSummary(BaseModel):
+    id: str
+    title: str
+    category: str
+    tags: List[str]
+    summary: str
+    read_time_min: int
+    video_url: str | None = None
+    video_title: str | None = None
+
+
+class ArticleDetail(ArticleSummary):
+    content: str
+    references: List[str] = Field(default_factory=list)
+
+
+class VideoItem(BaseModel):
+    id: str
+    title: str
+    category: str
+    duration_min: int
+    url: str
+    thumbnail: str
+    description: str
+    tags: List[str]
+
+
+class ContentSearchResponse(BaseModel):
+    articles: List[ArticleSummary]
+    videos: List[VideoItem]
+    total: int
+
+
+# ── Forum models ──────────────────────────────────────────────────────────────
+
+class ForumPostCreate(BaseModel):
+    title: str = Field(min_length=5, max_length=200)
+    body: str = Field(min_length=10, max_length=2000)
+    category: str = Field(default="general")
+
+
+class ForumPost(BaseModel):
+    id: int
+    user_id: int
+    username: str
+    title: str
+    body: str
+    category: str
+    created_at: str
+    reply_count: int = 0
+
+
+class ForumReplyCreate(BaseModel):
+    body: str = Field(min_length=2, max_length=1000)
+
+
+class ForumReply(BaseModel):
+    id: int
+    post_id: int
+    user_id: int
+    username: str
+    body: str
+    created_at: str
+
+
+# ── Gamification models ───────────────────────────────────────────────────────
+
+class Badge(BaseModel):
+    id: str
+    name: str
+    description: str
+    icon: str
+    earned_at: str | None = None
+
+
+class GamificationStatus(BaseModel):
+    streak_days: int
+    total_recommendations: int
+    badges: List[Badge]
+    next_badge: Badge | None = None
+
+
+# ── Profile / Health Goals models ─────────────────────────────────────────────
+
+class HealthGoals(BaseModel):
+    goal_weight_kg: float | None = None
+    goal_steps_per_day: int | None = None
+    goal_sleep_hours: float | None = None
+    goal_body_fat_percent: float | None = None
+    focus_areas: List[str] = Field(default_factory=list,
+        description="e.g. ['weight_loss','energy','cholesterol']")
+
+
+class UserProfile(BaseModel):
+    username: str
+    health_goals: HealthGoals
+    streak_days: int
+    total_recommendations: int
+
+
+# ── Provider Locator models ───────────────────────────────────────────────────
+
+class ProviderSearchRequest(BaseModel):
+    latitude: float
+    longitude: float
+    radius_km: float = Field(default=10.0, ge=1, le=100)
+    type: Literal["lab", "clinic", "hospital", "pharmacy"] = "clinic"
+
+
+class ProviderResult(BaseModel):
+    name: str
+    type: str
+    address: str
+    distance_km: float
+    phone: str | None = None
+    low_cost: bool
+    maps_url: str
+
+
+# ── Edge Notification models ──────────────────────────────────────────────────
+
+class EdgeNotificationRequest(BaseModel):
+    biomarkers: "Biomarkers"
+    lifestyle: "LifestyleSignals"
+    device_id: str = Field(default="unknown")
+
+
+class EdgeNotification(BaseModel):
+    severity: Literal["critical", "warning", "info"]
+    title: str
+    message: str
+    action: str
+
+
+class EdgeNotificationResponse(BaseModel):
+    device_id: str
+    notifications: List[EdgeNotification]
+    processed_locally: bool = True
+
+
 # ── Health Alert models ───────────────────────────────────────────────────────
 
 class HealthAlertRequest(BaseModel):

@@ -41,13 +41,15 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size     = MediaQuery.of(context).size;
     final isTablet = size.width > 600;
-    final logoSize = isTablet ? 160.0 : 120.0;
-    final maxW = isTablet ? 480.0 : double.infinity;
+    final logoSize = isTablet ? 160.0 : 110.0;
+    final maxW     = isTablet ? 480.0 : double.infinity;
 
     return Scaffold(
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -63,95 +65,103 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                 opacity: _fade,
                 child: SlideTransition(
                   position: _slide,
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: isTablet ? 48 : 28),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Spacer(flex: 2),
-                        // Logo
-                        Container(
-                          width: logoSize,
-                          height: logoSize,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.12),
-                            border: Border.all(color: kAccent, width: 3),
-                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 24, offset: const Offset(0, 8))],
-                          ),
-                          child: ClipOval(child: Image.asset('assets/logo.png', fit: BoxFit.cover)),
-                        ),
-                        const SizedBox(height: 28),
-                        // App name
-                        Text('VitaPulse',
-                            style: TextStyle(
-                              fontSize: isTablet ? 44 : 36,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: 2,
-                            )),
-                        const SizedBox(height: 10),
-                        Text('Your Smart Diet & Health Companion',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: isTablet ? 16 : 14,
-                              color: Colors.white.withOpacity(0.8),
-                              letterSpacing: 0.4,
-                            )),
-                        const SizedBox(height: 12),
-                        // Feature pills
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 6,
-                          alignment: WrapAlignment.center,
-                          children: ['🧪 Biomarker Analysis', '📄 Report Upload', '🥗 Diet Plans', '📊 Health Tracking']
-                              .map((f) => Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: Colors.white.withOpacity(0.3)),
-                                    ),
-                                    child: Text(f, style: const TextStyle(color: Colors.white, fontSize: 12)),
-                                  ))
-                              .toList(),
-                        ),
-                        const Spacer(flex: 2),
-                        // Buttons
-                        SizedBox(
-                          width: double.infinity,
-                          height: 54,
-                          child: ElevatedButton(
-                            onPressed: () => _goAuth(register: false),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: kAccent,
-                              foregroundColor: kTextDark,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              elevation: 4,
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 48 : 28,
+                      vertical: 24,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: size.height - MediaQuery.of(context).padding.top - MediaQuery.of(context).padding.bottom - 48),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(height: size.height * 0.06),
+                            // Logo
+                            Container(
+                              width: logoSize,
+                              height: logoSize,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(0.12),
+                                border: Border.all(color: kAccent, width: 3),
+                                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 24, offset: const Offset(0, 8))],
+                              ),
+                              child: ClipOval(child: Image.asset('assets/logo.png', fit: BoxFit.cover)),
                             ),
-                            child: const Text('Login', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 54,
-                          child: OutlinedButton(
-                            onPressed: () => _goAuth(register: true),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: const BorderSide(color: Colors.white, width: 2),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            const SizedBox(height: 24),
+                            Text('VitaPulse',
+                                style: TextStyle(
+                                  fontSize: isTablet ? 44 : 34,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 2,
+                                )),
+                            const SizedBox(height: 10),
+                            Text('Your Smart Diet & Health Companion',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: isTablet ? 16 : 14,
+                                  color: Colors.white.withOpacity(0.8),
+                                  letterSpacing: 0.4,
+                                )),
+                            const SizedBox(height: 20),
+                            // Feature pills
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.center,
+                              children: ['🧪 Biomarker Analysis', '📄 Report Upload', '🥗 Diet Plans', '📊 Health Tracking']
+                                  .map((f) => Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.15),
+                                          borderRadius: BorderRadius.circular(20),
+                                          border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                        ),
+                                        child: Text(f, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                                      ))
+                                  .toList(),
                             ),
-                            child: const Text('Create Account', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-                          ),
+                            const Spacer(),
+                            // Login button
+                            SizedBox(
+                              width: double.infinity,
+                              height: 54,
+                              child: ElevatedButton(
+                                onPressed: () => _goAuth(register: false),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: kAccent,
+                                  foregroundColor: kTextDark,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  elevation: 4,
+                                ),
+                                child: const Text('Login', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            // Register button
+                            SizedBox(
+                              width: double.infinity,
+                              height: 54,
+                              child: OutlinedButton(
+                                onPressed: () => _goAuth(register: true),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  side: const BorderSide(color: Colors.white, width: 2),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                ),
+                                child: const Text('Create Account', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text('Not a diagnostic system. Consult a healthcare professional.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.5))),
+                            const SizedBox(height: 8),
+                          ],
                         ),
-                        const SizedBox(height: 32),
-                        Text('Not a diagnostic system. Consult a healthcare professional.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(0.5))),
-                        const SizedBox(height: 16),
-                      ],
+                      ),
                     ),
                   ),
                 ),

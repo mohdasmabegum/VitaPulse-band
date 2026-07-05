@@ -37,7 +37,17 @@ class _RecommendScreenState extends State<RecommendScreen> {
   final _sleep    = TextEditingController(text: '7');
   final _workouts = TextEditingController(text: '2');
 
-  static const int _maxBytes = 5 * 1024 * 1024; // 5 MB
+  @override
+  void dispose() {
+    _age.dispose(); _allergies.dispose();
+    _vitD.dispose(); _vitB12.dispose(); _iron.dispose();
+    _ldl.dispose(); _hdl.dispose(); _tg.dispose();
+    _height.dispose(); _weight.dispose(); _fat.dispose();
+    _steps.dispose(); _sleep.dispose(); _workouts.dispose();
+    super.dispose();
+  }
+
+  static const int _maxBytes = 5 * 1024 * 1024;
 
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles(

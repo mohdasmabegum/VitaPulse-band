@@ -17,11 +17,11 @@ class _HomeShellState extends State<HomeShell> with SingleTickerProviderStateMix
   int _index = 0;
   late AnimationController _navCtrl;
 
-  final _screens = const [
-    SymptomScreen(),
-    RecommendScreen(),
-    HistoryScreen(),
-    SettingsScreen(),
+  final _screens = [
+    const SymptomScreen(),
+    const RecommendScreen(),
+    const HistoryScreen(),
+    const SettingsScreen(),
   ];
 
   @override

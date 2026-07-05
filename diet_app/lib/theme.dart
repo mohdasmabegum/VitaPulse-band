@@ -20,7 +20,6 @@ ThemeData appTheme() => ThemeData(
     primary: kPrimary,
     secondary: kAccent,
     surface: kCard,
-    background: kBg,
   ),
   scaffoldBackgroundColor: kBg,
   fontFamily: 'Roboto',

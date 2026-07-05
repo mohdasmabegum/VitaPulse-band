@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
-import 'auth_screen.dart';
 import 'landing_screen.dart';
 import 'theme.dart';
 
@@ -85,10 +84,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: ClipOval(child: Image.asset('assets/logo.png', width: 60, height: 60, fit: BoxFit.cover)),
                   ),
                   const SizedBox(width: 16),
-                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(_username, style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
-                    Text('VitaPulse Member', style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.75))),
-                  ]),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(_username, style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                      Text('VitaPulse Member', style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.75))),
+                    ]),
+                  ),
                 ]),
               ),
               const SizedBox(height: 20),

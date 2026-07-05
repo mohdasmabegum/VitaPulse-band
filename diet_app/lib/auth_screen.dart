@@ -106,7 +106,11 @@ class _AuthScreenState extends State<AuthScreen> with TickerProviderStateMixin {
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: maxW),
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: isTablet ? 48 : 28),
+                      padding: EdgeInsets.only(
+                        left: isTablet ? 48 : 28,
+                        right: isTablet ? 48 : 28,
+                        bottom: MediaQuery.of(context).viewInsets.bottom + 28,
+                      ),
                       child: Column(
                         children: [
                           SizedBox(height: size.height * 0.07),

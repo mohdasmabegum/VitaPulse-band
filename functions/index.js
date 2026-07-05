@@ -2,10 +2,43 @@
 const functions = require("firebase-functions");
 const express   = require("express");
 const crypto    = require("crypto");
-const admin     = require("firebase-admin");
+const { createClient } = require("@libsql/client");
 
-admin.initializeApp();
-const db = admin.firestore();
+const TURSO_URL   = process.env.TURSO_URL;
+const TURSO_TOKEN = process.env.TURSO_TOKEN;
+
+let _db;
+function getDb() {
+  if (!_db) {
+    _db = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
+  }
+  return _db;
+}
+
+async function initDb() {
+  const db = getDb();
+  await db.executeMultiple(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      salt TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS sessions (
+      token TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS recommendation_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      payload_json TEXT NOT NULL,
+      response_json TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+}
 
 /* ── Auth helpers ── */
 function hashPw(pw, salt) {
@@ -18,15 +51,16 @@ async function getUserId(req) {
   if (!auth.startsWith("Bearer ")) return null;
   const token = auth.slice(7).trim();
   if (!token) return null;
-  const snap = await db.collection("sessions").doc(token).get();
-  return snap.exists ? snap.data().user_id : null;
+  const db = getDb();
+  const res = await db.execute({ sql: "SELECT user_id FROM sessions WHERE token = ?", args: [token] });
+  return res.rows.length ? res.rows[0].user_id : null;
 }
 
 /* ── Food DB ── */
 const VITAMIN_FOODS = {
-  vitamin_d:   { omnivore: ["salmon","egg yolk","fortified milk","sardines"],          vegetarian: ["fortified milk","fortified yogurt","mushrooms","fortified cereal"] },
-  vitamin_b12: { omnivore: ["eggs","milk","fish","chicken"],                            vegetarian: ["milk","yogurt","paneer","fortified nutritional yeast"] },
-  iron:        { omnivore: ["lean red meat","lentils","spinach","beans"],               vegetarian: ["lentils","spinach","chickpeas","pumpkin seeds"] },
+  vitamin_d:   { omnivore: ["salmon","egg yolk","fortified milk","sardines"],         vegetarian: ["fortified milk","fortified yogurt","mushrooms","fortified cereal"] },
+  vitamin_b12: { omnivore: ["eggs","milk","fish","chicken"],                           vegetarian: ["milk","yogurt","paneer","fortified nutritional yeast"] },
+  iron:        { omnivore: ["lean red meat","lentils","spinach","beans"],              vegetarian: ["lentils","spinach","chickpeas","pumpkin seeds"] },
 };
 const CHOL_HELP  = ["oats","barley","almonds","walnuts","beans","apple","broccoli","olive oil"];
 const CHOL_LIMIT = ["deep-fried food","processed meat","packaged bakery snacks","trans-fat rich fast food"];
@@ -106,7 +140,7 @@ function buildInsights(scores) {
 
 /* ── Recommendation Engine ── */
 function buildRec(u) {
-  const dk = u.diet_type === "vegetarian" ? "vegetarian" : "omnivore";
+  const dk  = u.diet_type === "vegetarian" ? "vegetarian" : "omnivore";
   const dL  = lvl(u.biomarkers.vitamin_d_ng_ml,    20, 30);
   const bL  = lvl(u.biomarkers.vitamin_b12_pg_ml, 200, 300);
   const iL  = lvl(u.biomarkers.iron_ferritin_ng_ml, 30, 60);
@@ -124,9 +158,9 @@ function buildRec(u) {
   if (fatH) risk.push("Body fat is above recommended range.");
 
   const sugg = [];
-  if (dL !== "normal") sugg.push({ purpose:"Improve Vitamin D",    foods:filterAllergic(VITAMIN_FOODS.vitamin_d[dk],   al), avoid_or_limit:[] });
-  if (bL !== "normal") sugg.push({ purpose:"Improve Vitamin B12",  foods:filterAllergic(VITAMIN_FOODS.vitamin_b12[dk], al), avoid_or_limit:[] });
-  if (iL !== "normal") sugg.push({ purpose:"Improve Iron/Ferritin",foods:filterAllergic(VITAMIN_FOODS.iron[dk],        al), avoid_or_limit:[] });
+  if (dL !== "normal") sugg.push({ purpose:"Improve Vitamin D",     foods:filterAllergic(VITAMIN_FOODS.vitamin_d[dk],   al), avoid_or_limit:[] });
+  if (bL !== "normal") sugg.push({ purpose:"Improve Vitamin B12",   foods:filterAllergic(VITAMIN_FOODS.vitamin_b12[dk], al), avoid_or_limit:[] });
+  if (iL !== "normal") sugg.push({ purpose:"Improve Iron/Ferritin", foods:filterAllergic(VITAMIN_FOODS.iron[dk],        al), avoid_or_limit:[] });
   if (ldlH||hdlL||tgH) sugg.push({ purpose:"Reduce LDL & triglycerides", foods:filterAllergic(CHOL_HELP, al), avoid_or_limit:filterAllergic(CHOL_LIMIT, al) });
   if (fatH) sugg.push({ purpose:"Reduce body fat", foods:filterAllergic(FAT_LOSS, al), avoid_or_limit:filterAllergic(["sugary drinks","late-night snacking","highly processed snacks"], al) });
 
@@ -171,14 +205,15 @@ app.post("/auth/register", async (req, res) => {
   const { username, password } = req.body || {};
   if (!username || !password) return res.status(400).json({ detail: "username and password required" });
   const uname = username.trim().toLowerCase();
+  const db = getDb();
   try {
-    const existing = await db.collection("users").doc(uname).get();
-    if (existing.exists) return res.status(409).json({ detail: "Username already exists" });
-    const salt = randToken(16);
-    const hash = hashPw(password, salt);
-    await db.collection("users").doc(uname).set({ username: uname, password_hash: hash, salt, created_at: new Date().toISOString() });
+    const existing = await db.execute({ sql: "SELECT id FROM users WHERE username = ?", args: [uname] });
+    if (existing.rows.length) return res.status(409).json({ detail: "Username already exists" });
+    const salt = randToken(16), hash = hashPw(password, salt);
+    await db.execute({ sql: "INSERT INTO users (username, password_hash, salt) VALUES (?, ?, ?)", args: [uname, hash, salt] });
+    const user = await db.execute({ sql: "SELECT id FROM users WHERE username = ?", args: [uname] });
     const token = randToken();
-    await db.collection("sessions").doc(token).set({ user_id: uname, created_at: new Date().toISOString() });
+    await db.execute({ sql: "INSERT INTO sessions (token, user_id) VALUES (?, ?)", args: [token, user.rows[0].id] });
     res.json({ token, username: uname });
   } catch (e) {
     res.status(500).json({ detail: e.message });
@@ -188,14 +223,15 @@ app.post("/auth/register", async (req, res) => {
 app.post("/auth/login", async (req, res) => {
   const { username, password } = req.body || {};
   const uname = (username || "").trim().toLowerCase();
+  const db = getDb();
   try {
-    const snap = await db.collection("users").doc(uname).get();
-    if (!snap.exists) return res.status(401).json({ detail: "Invalid username or password" });
-    const user = snap.data();
+    const result = await db.execute({ sql: "SELECT id, password_hash, salt FROM users WHERE username = ?", args: [uname] });
+    if (!result.rows.length) return res.status(401).json({ detail: "Invalid username or password" });
+    const user = result.rows[0];
     if (hashPw(password, user.salt) !== user.password_hash)
       return res.status(401).json({ detail: "Invalid username or password" });
     const token = randToken();
-    await db.collection("sessions").doc(token).set({ user_id: uname, created_at: new Date().toISOString() });
+    await db.execute({ sql: "INSERT INTO sessions (token, user_id) VALUES (?, ?)", args: [token, user.id] });
     res.json({ token, username: uname });
   } catch (e) {
     res.status(500).json({ detail: e.message });
@@ -223,11 +259,10 @@ app.post("/recommend/save", async (req, res) => {
   if (!userId) return res.status(401).json({ detail: "Authorization required" });
   try {
     const rec = buildRec(req.body);
-    await db.collection("recommendation_history").add({
-      user_id: userId,
-      payload_json: JSON.stringify(req.body),
-      response_json: JSON.stringify(rec),
-      created_at: new Date().toISOString(),
+    const db = getDb();
+    await db.execute({
+      sql: "INSERT INTO recommendation_history (user_id, payload_json, response_json) VALUES (?, ?, ?)",
+      args: [userId, JSON.stringify(req.body), JSON.stringify(rec)],
     });
     res.json(rec);
   } catch (e) { res.status(422).json({ detail: e.message }); }
@@ -237,16 +272,21 @@ app.get("/history", async (req, res) => {
   const userId = await getUserId(req);
   if (!userId) return res.status(401).json({ detail: "Authorization required" });
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
-  const snap = await db.collection("recommendation_history")
-    .where("user_id", "==", userId)
-    .orderBy("created_at", "desc")
-    .limit(limit)
-    .get();
-  const rows = snap.docs.map(d => {
-    const data = d.data();
-    return { id: d.id, created_at: data.created_at, payload: JSON.parse(data.payload_json), recommendation: JSON.parse(data.response_json) };
+  const db = getDb();
+  const result = await db.execute({
+    sql: "SELECT id, payload_json, response_json, created_at FROM recommendation_history WHERE user_id = ? ORDER BY id DESC LIMIT ?",
+    args: [userId, limit],
   });
-  res.json(rows);
+  res.json(result.rows.map(r => ({
+    id: r.id, created_at: r.created_at,
+    payload: JSON.parse(r.payload_json),
+    recommendation: JSON.parse(r.response_json),
+  })));
 });
 
-exports.api = functions.https.onRequest(app);
+// Initialize DB tables then start
+const _init = initDb().catch(console.error);
+exports.api = functions.https.onRequest(async (req, res) => {
+  await _init;
+  app(req, res);
+});

@@ -7,6 +7,7 @@ diet_system.db
 
 # Firebase Cloud Functions dependencies
 functions/node_modules/
+functions/.env
 
 # Flutter build outputs
 diet_app/build/
